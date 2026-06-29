@@ -120,3 +120,29 @@ exports.getAllTasks = async (req, res, next) => {
     }
 
 }
+
+exports.getTaskById=async (req,res,next)=>{
+    console.log(req.params.taskId)
+    try {
+        fs.readFile(dataBase,"utf8",(err,data)=>{
+            if(data){
+                const allTasks=JSON.parse(data);
+                const task=allTasks.find((t)=>{
+                    return t.id===Number(req.params.taskId)
+                })
+                if(task){
+                    res.status(200).json({
+                        message:`data fetch successfully for Id ${req.params.taskId}`,
+                        data:task
+                    })
+                }else{
+                    res.status(404).json({
+                        message:`Id ${req.params.taskId} Not exist`
+                    })
+                }
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
+}
