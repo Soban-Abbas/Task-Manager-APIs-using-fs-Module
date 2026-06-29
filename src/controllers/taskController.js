@@ -58,8 +58,8 @@ exports.postTask = async (req, res, next) => {
 
 exports.getAllTasks = async (req, res, next) => {
     try {
-        const page = req.query.page || 1;
-        const limit = 3;
+        const page =Number( req.query.page) || 1;
+        const limit = Number(req.query.limit) || 3;
         const status = req.query.status;
         const sort = req.query.sort;
         fs.readFile(dataBase, "utf-8", (err, data) => {
