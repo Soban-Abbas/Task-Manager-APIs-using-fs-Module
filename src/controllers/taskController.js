@@ -98,9 +98,9 @@ exports.getAllTasks = async (req, res, next) => {
                     let endIndex = startIndex + limit;
                     let copyOriginalTasks = [...allTasks];
                     let pagination = copyOriginalTasks.slice(startIndex, endIndex);
-                    if(pagination.length===0){
-                       return res.status(404).json({
-                            message:`Tasks  not  found for page ${page}`
+                    if (pagination.length === 0) {
+                        return res.status(404).json({
+                            message: `Tasks  not  found for page ${page}`
                         })
                     }
                     res.status(200).json({
@@ -121,25 +121,123 @@ exports.getAllTasks = async (req, res, next) => {
 
 }
 
-exports.getTaskById=async (req,res,next)=>{
+exports.getTaskById = async (req, res, next) => {
     console.log(req.params.taskId)
+    try {
+        fs.readFile(dataBase, "utf8", (err, data) => {
+            if (data) {
+                const allTasks = JSON.parse(data);
+                const task = allTasks.find((t) => {
+                    return t.id === Number(req.params.taskId)
+                })
+                if (task) {
+                    res.status(200).json({
+                        message: `data fetch successfully for Id ${req.params.taskId}`,
+                        data: task
+                    })
+                } else {
+                    res.status(404).json({
+                        message: `Id ${req.params.taskId} Not exist`
+                    })
+                }
+            } else {
+                res.status(404).json({
+                    message: "Error With DataBase"
+                })
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.updateTaskbyId = async (req, res, next) => {
+    try {
+        fs.readFile(dataBase, "utf8", (err, data) => {
+            if (data) {
+                const allTasks = JSON.parse(data);
+                const copyAllTask = [...allTasks];
+                const task = copyAllTask.find((t) => {
+                    return t.id === Number(req.params.taskId)
+                })
+                if(!task){
+                   return res.status(404).json({
+                        message:`Id ${req.params.taskId} Not exist `
+                    })
+                }
+                const taskIndex = copyAllTask.findIndex((t) => {
+                    return t.id === Number(req.params.taskId)
+                })
+
+                task.id = task.id;
+                task.title = req.body.title || task.title
+                task.description = req.body.description || task.description
+                task.status = req.body.status || task.status
+                task.priority = req.body.priority || task.priority
+                task.dueDate = req.body.priority || task.priority
+                task.createdAt = task.createdAt
+                task.updatedAt = new Date().toISOString();
+
+
+                copyAllTask[taskIndex]=task
+            
+fs.writeFile(dataBase,JSON.stringify(copyAllTask),(err)=>{
+    if(!err){
+      return   res.status(200).json({
+            message:"Task updated Successfully",
+            data:task
+        })
+    }
+})
+
+
+
+
+            }else{
+               return res.status(500).join({
+                    message:"Error with Database"
+                })
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+exports.deleteTask=async(req,res,next)=>{
     try {
         fs.readFile(dataBase,"utf8",(err,data)=>{
             if(data){
-                const allTasks=JSON.parse(data);
-                const task=allTasks.find((t)=>{
-                    return t.id===Number(req.params.taskId)
+const AllTasks=JSON.parse(data);
+const  copyAllTasks=[...AllTasks];
+const findIndexofTask=copyAllTasks.findIndex((t)=>{
+    return t.id===Number(req.params.taskId);
+
+})
+if(findIndexofTask<0){
+  return  res.status(404).json({
+        message:"Id Not Exist"
+    })
+
+}
+
+copyAllTasks.splice(findIndexofTask,1);
+fs.writeFile(dataBase,JSON.stringify(copyAllTasks),(err)=>{
+ if(!err){
+     return res.status(200).json({
+         message: "Task Deleted Successfully",
+
+     })
+ }
+})
+
+
+
+
+
+            }else{
+                return res.status(404).json({
+                    message:"Error with DataBase"
                 })
-                if(task){
-                    res.status(200).json({
-                        message:`data fetch successfully for Id ${req.params.taskId}`,
-                        data:task
-                    })
-                }else{
-                    res.status(404).json({
-                        message:`Id ${req.params.taskId} Not exist`
-                    })
-                }
             }
         })
     } catch (error) {
